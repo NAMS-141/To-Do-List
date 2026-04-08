@@ -139,8 +139,3 @@ Capa de abstracción que centraliza todas las llamadas HTTP al backend usando la
 
 Nery Antonio Mata Salas
 
----
-
-## 📄 Licencia
-
-Proyecto académico — Universidad. Todos los derechos reservados.
