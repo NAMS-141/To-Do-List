@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -7,86 +7,68 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getTasks } from "../../services/taskService";
 
 export default function HomeScreen() {
-  const [tasks, setTasks] = useState([]);
+  const router = useRouter();
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const router = useRouter();
-
-  const API_URL = "http://TU_API/tasks"; // ⚠️ cambia esto
-
-  const fetchTasks = async () => {
-    try {
+  useFocusEffect(
+    useCallback(() => {
       setLoading(true);
-
-      const response = await fetch(API_URL);
-
-      // ⚠️ IMPORTANTE (esto no lo hace solo como axios)
-      if (!response.ok) {
-        throw new Error("Error al obtener tareas");
-      }
-
-      const data = await response.json();
-      setTasks(data);
-    } catch (error) {
-      console.log("Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+      getTasks()
+        .then(setTasks)
+        .finally(() => setLoading(false));
+    }, []),
+  );
 
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator size="large" />
-        <Text>Cargando tareas...</Text>
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 10 }}>
-        Mis tareas
-      </Text>
-
+      <Text style={{ fontSize: 24, marginBottom: 10 }}>Mis tareas</Text>
       <FlatList
         data={tasks}
-        keyExtractor={(item: any) => item.id.toString()}
-        renderItem={({ item }: any) => (
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
           <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: "/tasks/[id]",
+                params: { id: String(item.id) },
+              })
+            }
             style={{
               padding: 15,
-              marginBottom: 10,
               backgroundColor: "#eee",
+              marginBottom: 10,
               borderRadius: 10,
             }}
-            onPress={() => router.push(`/task/${item.id}`)}
           >
-            <Text style={{ fontSize: 18 }}>{item.title}</Text>
-
-            <Text>
-              Estado: {item.completed ? "✅ Completada" : "❌ Pendiente"}
-            </Text>
+            <Text>{item.title}</Text>
+            <Text>{item.completed ? "✅ Completada" : "❌ Pendiente"}</Text>
           </TouchableOpacity>
         )}
       />
-
       <TouchableOpacity
-        onPress={fetchTasks}
+        onPress={() => router.push("/tasks/edit")}
         style={{
           marginTop: 10,
           padding: 15,
-          backgroundColor: "#007bff",
+          backgroundColor: "green",
           borderRadius: 10,
         }}
       >
-        <Text style={{ color: "white", textAlign: "center" }}>Recargar</Text>
+        <Text style={{ color: "white", textAlign: "center" }}>
+          + Nueva tarea
+        </Text>
       </TouchableOpacity>
     </View>
   );
